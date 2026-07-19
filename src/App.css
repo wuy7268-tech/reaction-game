@@ -1,0 +1,47 @@
+.game {
+  width: 100%;
+  min-height: 100svh;
+  margin: 0;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font: inherit;
+  color: #fff;
+  transition: background-color 0.15s ease;
+}
+
+.game h1 {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.game p {
+  margin: 0;
+  font-size: clamp(1.25rem, 4vw, 2rem);
+  font-weight: 500;
+  opacity: 0.95;
+}
+
+.game--idle,
+.game--result,
+.game--tooSoon {
+  background: #1a2744;
+}
+
+.game--waiting {
+  background: #c0392b;
+}
+
+.game--ready {
+  background: #27ae60;
+}
+
+.game--tooSoon {
+  background: #8e2a1f;
+}
