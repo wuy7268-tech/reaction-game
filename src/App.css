@@ -45,3 +45,28 @@
 .game--tooSoon {
   background: #8e2a1f;
 }
+
+.best {
+  margin-top: 8px;
+  font-size: clamp(1rem, 3vw, 1.35rem);
+  opacity: 0.85;
+}
+
+.history {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 28rem;
+}
+
+.history li {
+  font-size: 0.9rem;
+  opacity: 0.75;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+}
