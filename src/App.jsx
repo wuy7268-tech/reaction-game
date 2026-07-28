@@ -84,14 +84,21 @@ function App() {
     }
   }
 
-  const bestMs =
-    scores.length > 0 ? Math.min(...scores.map((s) => s.ms)) : null
-
   let message = 'Click to start'
   if (status === 'waiting') message = 'Wait for green...'
   if (status === 'ready') message = 'Click!'
   if (status === 'tooSoon') message = 'Too soon! Click to try again'
   if (status === 'result') message = `${reactionMs} ms — Click to try again`
+
+  const attempts = scores.length
+  const bestMs =
+    attempts > 0 ? Math.min(...scores.map((score) => score.ms)) : null
+  const averageMs =
+    attempts > 0
+      ? Math.round(
+          scores.reduce((sum, score) => sum + score.ms, 0) / attempts,
+        )
+      : null
 
   return (
     <button
@@ -102,14 +109,15 @@ function App() {
       <h1>Reaction Game</h1>
       <p>{message}</p>
 
-      {bestMs !== null && <p className="best">Best: {bestMs} ms</p>}
-
-      {scores.length > 0 && (
-        <ul className="history" aria-label="Saved scores">
-          {scores.map((score) => (
-            <li key={score.id}>{score.ms} ms</li>
-          ))}
-        </ul>
+      {attempts > 0 && (
+        <>
+          <p>
+            Best: {bestMs} ms | Average: {averageMs} ms | Attempts: {attempts}
+          </p>
+          <p aria-label="Saved scores">
+            Past scores: {scores.map((score) => `${score.ms} ms`).join(', ')}
+          </p>
+        </>
       )}
     </button>
   )

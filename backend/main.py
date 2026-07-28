@@ -33,6 +33,10 @@ class ScoreOut(BaseModel):
     created_at: str
 
 
+class ClearOut(BaseModel):
+    deleted: int
+
+
 @contextmanager
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -94,3 +98,12 @@ def list_scores(limit: int = Query(10, ge=1, le=50)):
         ScoreOut(id=row["id"], ms=row["ms"], created_at=row["created_at"])
         for row in rows
     ]
+
+
+@app.delete("/scores", response_model=ClearOut)
+def clear_scores():
+    """Extra endpoint: wipe all saved scores."""
+    with get_db() as conn:
+        cursor = conn.execute("DELETE FROM scores")
+        deleted = cursor.rowcount
+    return ClearOut(deleted=deleted)
