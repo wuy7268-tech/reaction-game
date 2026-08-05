@@ -1,6 +1,34 @@
+.app {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-switcher {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 12px;
+  background: #0f172a;
+}
+
+.game-switcher button {
+  font: inherit;
+  color: #fff;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.game-switcher button.is-active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 .game {
   width: 100%;
-  min-height: 100svh;
+  flex: 1;
+  min-height: 0;
   margin: 0;
   border: none;
   cursor: pointer;
@@ -14,14 +42,16 @@
   transition: background-color 0.15s ease;
 }
 
-.game h1 {
+.game h1,
+.stroop h1 {
   margin: 0;
   font-size: clamp(2rem, 6vw, 3.5rem);
   font-weight: 700;
   letter-spacing: -0.03em;
 }
 
-.game p {
+.game p,
+.stroop p {
   margin: 0;
   font-size: clamp(1.25rem, 4vw, 2rem);
   font-weight: 500;
@@ -44,4 +74,56 @@
 
 .game--tooSoon {
   background: #8e2a1f;
+}
+
+.stroop {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  color: #fff;
+  background: #1a2744;
+  text-align: center;
+}
+
+.stroop__hint {
+  opacity: 0.8;
+}
+
+.stroop__word {
+  font-size: clamp(3rem, 12vw, 6rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin: 12px 0 8px;
+}
+
+.stroop__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  max-width: 28rem;
+}
+
+.stroop__choice,
+.stroop__start {
+  font: inherit;
+  font-size: 1rem;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  cursor: pointer;
+  min-width: 6rem;
+}
+
+.stroop__start {
+  background: #334155;
+}
+
+.stroop__choice {
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
