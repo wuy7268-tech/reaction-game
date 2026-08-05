@@ -1,16 +1,68 @@
-# React + Vite
+# Reaction & Stroop Lab
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A small web app for measuring reaction time and trying a Stroop colour test. Scores are saved on a FastAPI backend with SQLite, and the UI shows stats plus a progress chart over time.
 
-Currently, two official plugins are available:
+## Tech stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** React + Vite
+- **Backend:** FastAPI + Uvicorn
+- **Database:** SQLite (`backend/scores.db`)
+- **Charts:** Recharts
+- **Tests:** pytest
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Reaction game: wait for green, click as fast as you can
+- Stroop test: pick the ink colour, not the word
+- Scores stored with a timestamp and game label (`reaction` / `stroop`)
+- `GET /stats` for best time, average time, and attempts per game
+- Progress line chart with one line per game
+- Clear “couldn't reach the server” message if the backend is down
 
-## Expanding the Oxlint configuration
+## How to run
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+You need two terminals, both from the project root.
+
+### 1. Install dependencies (first time)
+
+```bash
+# Frontend
+npm install
+
+# Backend
+python3 -m venv .venv
+.venv/bin/pip install -r backend/requirements.txt
+```
+
+### 2. Start the backend
+
+```bash
+npm run api
+```
+
+API docs: http://localhost:8000/docs
+
+### 3. Start the frontend
+
+```bash
+npm run dev
+```
+
+App: http://localhost:5173/
+
+## Tests
+
+```bash
+cd backend
+../.venv/bin/pytest -q
+```
+
+## API overview
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/health` | Health check |
+| POST | `/scores` | Save a score |
+| GET | `/scores` | List recent scores (`?game=reaction\|stroop`) |
+| GET | `/stats` | Best / average / attempts per game |
+| DELETE | `/scores` | Clear all scores |
