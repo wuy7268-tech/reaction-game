@@ -4,7 +4,7 @@ import { fetchScores, saveScore } from './api'
 const MIN_WAIT_MS = 1500
 const MAX_WAIT_MS = 4000
 
-export default function ReactionGame() {
+export default function ReactionGame({ onScoresChanged }) {
   const [status, setStatus] = useState('idle')
   const [reactionMs, setReactionMs] = useState(null)
   const [scores, setScores] = useState([])
@@ -65,6 +65,7 @@ export default function ReactionGame() {
       setStatus('result')
       saveScore({ ms, game: 'reaction' })
         .then(() => refreshScores())
+        .then(() => onScoresChanged?.())
         .catch(() => {})
     }
   }

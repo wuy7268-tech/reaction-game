@@ -1,10 +1,16 @@
 import { useState } from 'react'
 import './App.css'
+import ProgressPanel from './ProgressPanel'
 import ReactionGame from './ReactionGame'
 import StroopGame from './StroopGame'
 
 export default function App() {
   const [game, setGame] = useState('reaction')
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  function handleScoresChanged() {
+    setRefreshKey((key) => key + 1)
+  }
 
   return (
     <div className="app">
@@ -25,7 +31,13 @@ export default function App() {
         </button>
       </nav>
 
-      {game === 'reaction' ? <ReactionGame /> : <StroopGame />}
+      {game === 'reaction' ? (
+        <ReactionGame onScoresChanged={handleScoresChanged} />
+      ) : (
+        <StroopGame onScoresChanged={handleScoresChanged} />
+      )}
+
+      <ProgressPanel refreshKey={refreshKey} />
     </div>
   )
 }

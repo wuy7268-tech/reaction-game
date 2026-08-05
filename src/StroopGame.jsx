@@ -17,7 +17,7 @@ function pickTrial() {
   return { word: word.name, ink: ink.name, inkValue: ink.value }
 }
 
-export default function StroopGame() {
+export default function StroopGame({ onScoresChanged }) {
   const [status, setStatus] = useState('idle')
   const [trial, setTrial] = useState(null)
   const [lastResult, setLastResult] = useState(null)
@@ -54,6 +54,7 @@ export default function StroopGame() {
     try {
       await saveScore({ ms, game: 'stroop', correct })
       await refreshScores()
+      onScoresChanged?.()
     } catch {
       // Keep showing the round result even if save fails.
     }
