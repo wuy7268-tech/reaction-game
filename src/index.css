@@ -1,13 +1,39 @@
+:root {
+  --bg: #10221f;
+  --bg-deep: #0a1614;
+  --panel: #16302b;
+  --ink: #e8f2ef;
+  --muted: #9bb5ae;
+  --line: rgba(232, 242, 239, 0.16);
+  --accent: #d4a017;
+  --accent-soft: rgba(212, 160, 23, 0.18);
+  --danger: #c44536;
+  --ready: #2f9e6b;
+  --warn: #c27803;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: #0f172a;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(212, 160, 23, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(47, 158, 107, 0.12), transparent 50%),
+    linear-gradient(165deg, var(--bg-deep), var(--bg) 45%, #132823);
+  min-height: 100svh;
 }
 
 #root {
   min-height: 100svh;
+}
+
+button,
+input {
+  font: inherit;
 }
