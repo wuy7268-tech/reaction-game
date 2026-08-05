@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchScores, saveScore } from './api'
+import { useServerStatus } from './ServerStatus'
 
 const MIN_WAIT_MS = 1500
 const MAX_WAIT_MS = 4000
@@ -10,12 +11,14 @@ export default function ReactionGame({ onScoresChanged }) {
   const [scores, setScores] = useState([])
   const timeoutRef = useRef(null)
   const startTimeRef = useRef(null)
+  const { reportSuccess, reportFailure } = useServerStatus()
 
   async function refreshScores() {
     try {
       setScores(await fetchScores('reaction'))
-    } catch {
-      // Backend may be offline while developing the UI.
+      reportSuccess()
+    } catch (error) {
+      reportFailure(error)
     }
   }
 
@@ -64,9 +67,14 @@ export default function ReactionGame({ onScoresChanged }) {
       setReactionMs(ms)
       setStatus('result')
       saveScore({ ms, game: 'reaction' })
-        .then(() => refreshScores())
+        .then(() => {
+          reportSuccess()
+          return refreshScores()
+        })
         .then(() => onScoresChanged?.())
-        .catch(() => {})
+        .catch((error) => {
+          reportFailure(error)
+        })
     }
   }
 

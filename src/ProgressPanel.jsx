@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts'
 import { fetchAllScoresForChart, fetchStats } from './api'
+import { useServerStatus } from './ServerStatus'
 
 function buildChartData(scores) {
   const byGame = { reaction: [], stroop: [] }
@@ -34,6 +35,7 @@ function buildChartData(scores) {
 }
 
 export default function ProgressPanel({ refreshKey }) {
+  const { reportSuccess, reportFailure } = useServerStatus()
   const [stats, setStats] = useState([])
   const [chartData, setChartData] = useState([])
 
@@ -45,10 +47,11 @@ export default function ProgressPanel({ refreshKey }) {
       ])
       setStats(nextStats)
       setChartData(buildChartData(scores))
-    } catch {
-      // Offline handling comes in a follow-up change.
+      reportSuccess()
+    } catch (error) {
+      reportFailure(error)
     }
-  }, [])
+  }, [reportFailure, reportSuccess])
 
   useEffect(() => {
     refresh()

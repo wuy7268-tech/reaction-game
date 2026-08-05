@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchScores, saveScore } from './api'
+import { useServerStatus } from './ServerStatus'
 
 const COLORS = [
   { name: 'RED', value: '#e74c3c' },
@@ -23,12 +24,14 @@ export default function StroopGame({ onScoresChanged }) {
   const [lastResult, setLastResult] = useState(null)
   const [scores, setScores] = useState([])
   const startTimeRef = useRef(null)
+  const { reportSuccess, reportFailure } = useServerStatus()
 
   async function refreshScores() {
     try {
       setScores(await fetchScores('stroop'))
-    } catch {
-      // Backend may be offline while developing the UI.
+      reportSuccess()
+    } catch (error) {
+      reportFailure(error)
     }
   }
 
@@ -53,10 +56,11 @@ export default function StroopGame({ onScoresChanged }) {
 
     try {
       await saveScore({ ms, game: 'stroop', correct })
+      reportSuccess()
       await refreshScores()
       onScoresChanged?.()
-    } catch {
-      // Keep showing the round result even if save fails.
+    } catch (error) {
+      reportFailure(error)
     }
   }
 
