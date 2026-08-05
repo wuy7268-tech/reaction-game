@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager, contextmanager
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -7,7 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import sqlite3
 
-DB_PATH = Path(__file__).with_name("scores.db")
+DB_PATH = Path(
+    os.environ.get("SCORES_DB", Path(__file__).with_name("scores.db"))
+)
 
 GameLabel = Literal["reaction", "stroop"]
 
