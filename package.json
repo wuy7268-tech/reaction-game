@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "api": ".venv/bin/uvicorn main:app --reload --port 8000 --app-dir backend"
+    "api": ".venv/bin/uvicorn main:app --reload --port 8000 --app-dir backend",
+    "seed": ".venv/bin/python backend/seed_sample_data.py --reset"
   },
   "dependencies": {
     "react": "^19.2.7",
