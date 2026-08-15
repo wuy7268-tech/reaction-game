@@ -8,6 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import sqlite3
 
+from sessions import SESSION_GAP_MINUTES, build_session_summaries
+from insights import DEFAULT_K, build_insights
+
 DB_PATH = Path(
     os.environ.get("SCORES_DB", Path(__file__).with_name("scores.db"))
 )
@@ -41,6 +44,53 @@ class GameStats(BaseModel):
     best_ms: int | None = None
     average_ms: float | None = None
     attempts: int = 0
+
+
+class GameCounts(BaseModel):
+    reaction: int = 0
+    stroop: int = 0
+
+
+class SessionStats(BaseModel):
+    session_id: int
+    started_at: str
+    ended_at: str
+    attempts: int
+    average_ms: float
+    best_ms: int
+    consistency_ms: float | None = None
+    stroop_attempts: int = 0
+    accuracy_percent: float | None = None
+    game_counts: GameCounts
+
+
+class ClusterCentroid(BaseModel):
+    average_ms: float
+    best_ms: float
+    consistency_ms: float
+    attempts: float
+    accuracy_percent: float
+
+
+class InsightGroup(BaseModel):
+    cluster_id: int
+    label: str
+    size: int
+    centroid: ClusterCentroid
+    session_ids: list[int]
+
+
+class LabeledSession(SessionStats):
+    cluster_id: int
+    label: str
+
+
+class InsightsOut(BaseModel):
+    n_clusters: int
+    features_used: list[str]
+    scaled: bool = True
+    groups: list[InsightGroup]
+    sessions: list[LabeledSession]
 
 
 @contextmanager
@@ -97,6 +147,27 @@ def row_to_score(row: sqlite3.Row) -> ScoreOut:
         created_at=row["created_at"],
         correct=correct,
     )
+
+
+def load_all_scores() -> list[dict]:
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, ms, game, created_at, correct
+            FROM scores
+            ORDER BY created_at ASC, id ASC
+            """
+        ).fetchall()
+    return [
+        {
+            "id": row["id"],
+            "ms": row["ms"],
+            "game": row["game"],
+            "created_at": row["created_at"],
+            "correct": None if row["correct"] is None else bool(row["correct"]),
+        }
+        for row in rows
+    ]
 
 
 @asynccontextmanager
@@ -206,6 +277,46 @@ def get_stats():
         stats_by_game.get("reaction", GameStats(game="reaction")),
         stats_by_game.get("stroop", GameStats(game="stroop")),
     ]
+
+
+@app.get("/sessions", response_model=list[SessionStats])
+def list_sessions(
+    gap_minutes: int = Query(
+        SESSION_GAP_MINUTES,
+        ge=1,
+        le=240,
+        description="Minutes of idle time that start a new session",
+    ),
+):
+    """
+    Group scores into play sessions by timestamp gaps, then summarize each one.
+    """
+    return build_session_summaries(load_all_scores(), gap_minutes=gap_minutes)
+
+
+@app.get("/insights", response_model=InsightsOut)
+def get_insights(
+    gap_minutes: int = Query(
+        SESSION_GAP_MINUTES,
+        ge=1,
+        le=240,
+        description="Minutes of idle time that start a new session",
+    ),
+    k: int = Query(
+        DEFAULT_K,
+        ge=1,
+        le=8,
+        description="Number of k-means clusters",
+    ),
+):
+    """
+    Cluster sessions with StandardScaler + k-means and return readable labels.
+    """
+    return build_insights(
+        load_all_scores(),
+        gap_minutes=gap_minutes,
+        n_clusters=k,
+    )
 
 
 @app.delete("/scores", response_model=ClearOut)
