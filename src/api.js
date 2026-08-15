@@ -38,6 +38,24 @@ export async function fetchStats() {
   return request('/stats')
 }
 
+export function emptyGameStats(game) {
+  return { game, best_ms: null, average_ms: null, attempts: 0 }
+}
+
+export function statsForGame(stats, game) {
+  return stats.find((item) => item.game === game) ?? emptyGameStats(game)
+}
+
+export function addAttemptToStats(stats, ms) {
+  const attempts = stats.attempts + 1
+  const best_ms = stats.best_ms == null ? ms : Math.min(stats.best_ms, ms)
+  const average_ms =
+    stats.average_ms == null
+      ? ms
+      : Math.round((stats.average_ms * stats.attempts + ms) / attempts)
+  return { ...stats, attempts, best_ms, average_ms }
+}
+
 export async function fetchInsights() {
   return request('/insights')
 }

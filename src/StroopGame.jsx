@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { fetchScores, saveScore } from './api'
+import {
+  addAttemptToStats,
+  emptyGameStats,
+  fetchScores,
+  fetchStats,
+  saveScore,
+  statsForGame,
+} from './api'
 import { useServerStatus } from './ServerStatus'
 
 const COLORS = [
@@ -23,6 +30,7 @@ export default function StroopGame({ historyKey = 0, onScoreSaved }) {
   const [trial, setTrial] = useState(null)
   const [lastResult, setLastResult] = useState(null)
   const [scores, setScores] = useState([])
+  const [summary, setSummary] = useState(() => emptyGameStats('stroop'))
   const [loadingScores, setLoadingScores] = useState(true)
   const [saving, setSaving] = useState(false)
   const startTimeRef = useRef(null)
@@ -34,9 +42,13 @@ export default function StroopGame({ historyKey = 0, onScoreSaved }) {
     async function loadScores() {
       setLoadingScores(true)
       try {
-        const next = await fetchScores('stroop')
+        const [next, stats] = await Promise.all([
+          fetchScores('stroop'),
+          fetchStats(),
+        ])
         if (!cancelled) {
           setScores(next)
+          setSummary(statsForGame(stats, 'stroop'))
           reportSuccess()
         }
       } catch (error) {
@@ -72,6 +84,7 @@ export default function StroopGame({ historyKey = 0, onScoreSaved }) {
     try {
       const saved = await saveScore({ ms, game: 'stroop', correct })
       setScores((prev) => [saved, ...prev].slice(0, 10))
+      setSummary((prev) => addAttemptToStats(prev, saved.ms))
       reportSuccess()
       onScoreSaved?.(saved)
     } catch (error) {
@@ -81,15 +94,11 @@ export default function StroopGame({ historyKey = 0, onScoreSaved }) {
     }
   }
 
-  const attempts = scores.length
-  const correctCount = scores.filter((score) => score.correct).length
+  const { attempts, average_ms: averageMs } = summary
+  const recentCorrect = scores.filter((score) => score.correct).length
   const accuracy =
-    attempts > 0 ? Math.round((correctCount / attempts) * 100) : null
-  const averageMs =
-    attempts > 0
-      ? Math.round(
-          scores.reduce((sum, score) => sum + score.ms, 0) / attempts,
-        )
+    scores.length > 0
+      ? Math.round((recentCorrect / scores.length) * 100)
       : null
 
   return (
@@ -154,12 +163,13 @@ export default function StroopGame({ historyKey = 0, onScoreSaved }) {
       {loadingScores ? (
         <p className="loading-note">Loading scores…</p>
       ) : (
-        attempts > 0 && (
-          <>
-            <p>
-              Accuracy: {accuracy}% | Average: {averageMs} ms | Attempts:{' '}
-              {attempts}
-            </p>
+        <>
+          <p>
+            Accuracy: {accuracy != null ? `${accuracy}%` : '—'} | Average:{' '}
+            {averageMs != null ? `${averageMs} ms` : '—'} | Attempts:{' '}
+            {attempts}
+          </p>
+          {scores.length > 0 && (
             <p aria-label="Saved Stroop scores">
               Past:{' '}
               {scores
@@ -169,8 +179,8 @@ export default function StroopGame({ historyKey = 0, onScoreSaved }) {
                 )
                 .join(', ')}
             </p>
-          </>
-        )
+          )}
+        </>
       )}
     </div>
   )

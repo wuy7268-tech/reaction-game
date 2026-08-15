@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { fetchScores, saveScore } from './api'
+import {
+  addAttemptToStats,
+  emptyGameStats,
+  fetchScores,
+  fetchStats,
+  saveScore,
+  statsForGame,
+} from './api'
 import { useServerStatus } from './ServerStatus'
 
 const MIN_WAIT_MS = 1500
@@ -9,6 +16,7 @@ export default function ReactionGame({ historyKey = 0, onScoreSaved }) {
   const [status, setStatus] = useState('idle')
   const [reactionMs, setReactionMs] = useState(null)
   const [scores, setScores] = useState([])
+  const [summary, setSummary] = useState(() => emptyGameStats('reaction'))
   const [loadingScores, setLoadingScores] = useState(true)
   const [saving, setSaving] = useState(false)
   const timeoutRef = useRef(null)
@@ -21,9 +29,13 @@ export default function ReactionGame({ historyKey = 0, onScoreSaved }) {
     async function loadScores() {
       setLoadingScores(true)
       try {
-        const next = await fetchScores('reaction')
+        const [next, stats] = await Promise.all([
+          fetchScores('reaction'),
+          fetchStats(),
+        ])
         if (!cancelled) {
           setScores(next)
+          setSummary(statsForGame(stats, 'reaction'))
           reportSuccess()
         }
       } catch (error) {
@@ -83,6 +95,7 @@ export default function ReactionGame({ historyKey = 0, onScoreSaved }) {
       saveScore({ ms, game: 'reaction' })
         .then((saved) => {
           setScores((prev) => [saved, ...prev].slice(0, 10))
+          setSummary((prev) => addAttemptToStats(prev, saved.ms))
           reportSuccess()
           onScoreSaved?.(saved)
         })
@@ -105,15 +118,7 @@ export default function ReactionGame({ historyKey = 0, onScoreSaved }) {
       : `${reactionMs} ms — Click to try again`
   }
 
-  const attempts = scores.length
-  const bestMs =
-    attempts > 0 ? Math.min(...scores.map((score) => score.ms)) : null
-  const averageMs =
-    attempts > 0
-      ? Math.round(
-          scores.reduce((sum, score) => sum + score.ms, 0) / attempts,
-        )
-      : null
+  const { attempts, best_ms: bestMs, average_ms: averageMs } = summary
 
   return (
     <button
@@ -128,18 +133,19 @@ export default function ReactionGame({ historyKey = 0, onScoreSaved }) {
       {loadingScores ? (
         <p className="loading-note">Loading scores…</p>
       ) : (
-        attempts > 0 && (
-          <>
-            <p>
-              Best: {bestMs} ms | Average: {averageMs} ms | Attempts:{' '}
-              {attempts}
-            </p>
+        <>
+          <p>
+            Best: {bestMs != null ? `${bestMs} ms` : '—'} | Average:{' '}
+            {averageMs != null ? `${averageMs} ms` : '—'} | Attempts:{' '}
+            {attempts}
+          </p>
+          {scores.length > 0 && (
             <p aria-label="Saved scores">
               Past scores:{' '}
               {scores.map((score) => `${score.ms} ms`).join(', ')}
             </p>
-          </>
-        )
+          )}
+        </>
       )}
     </button>
   )
