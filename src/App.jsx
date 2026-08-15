@@ -7,11 +7,17 @@ import StroopGame from './StroopGame'
 
 function AppShell() {
   const [game, setGame] = useState('reaction')
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [latestScore, setLatestScore] = useState(null)
+  const [historyKey, setHistoryKey] = useState(0)
   const { serverDown } = useServerStatus()
 
-  function handleScoresChanged() {
-    setRefreshKey((key) => key + 1)
+  function handleScoreSaved(score) {
+    setLatestScore(score)
+  }
+
+  function handleCleared() {
+    setLatestScore(null)
+    setHistoryKey((key) => key + 1)
   }
 
   return (
@@ -40,12 +46,15 @@ function AppShell() {
       )}
 
       {game === 'reaction' ? (
-        <ReactionGame onScoresChanged={handleScoresChanged} />
+        <ReactionGame
+          historyKey={historyKey}
+          onScoreSaved={handleScoreSaved}
+        />
       ) : (
-        <StroopGame onScoresChanged={handleScoresChanged} />
+        <StroopGame historyKey={historyKey} onScoreSaved={handleScoreSaved} />
       )}
 
-      <ProgressPanel refreshKey={refreshKey} />
+      <ProgressPanel latestScore={latestScore} onCleared={handleCleared} />
     </div>
   )
 }

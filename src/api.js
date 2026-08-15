@@ -1,6 +1,6 @@
 const API_URL = 'http://localhost:8000'
 const SCORE_LIMIT = 10
-const CHART_LIMIT = 50
+const CHART_LIMIT = 100
 
 export class ServerUnreachableError extends Error {
   constructor(message = "couldn't reach the server") {
@@ -38,6 +38,10 @@ export async function fetchStats() {
   return request('/stats')
 }
 
+export async function fetchInsights() {
+  return request('/insights')
+}
+
 export async function saveScore({ ms, game, correct = null }) {
   const body = { ms, game }
   if (correct !== null) body.correct = correct
@@ -47,4 +51,8 @@ export async function saveScore({ ms, game, correct = null }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+}
+
+export async function clearScores() {
+  return request('/scores', { method: 'DELETE' })
 }

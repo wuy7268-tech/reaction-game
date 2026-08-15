@@ -18,28 +18,42 @@ function pickTrial() {
   return { word: word.name, ink: ink.name, inkValue: ink.value }
 }
 
-export default function StroopGame({ onScoresChanged }) {
+export default function StroopGame({ historyKey = 0, onScoreSaved }) {
   const [status, setStatus] = useState('idle')
   const [trial, setTrial] = useState(null)
   const [lastResult, setLastResult] = useState(null)
   const [scores, setScores] = useState([])
+  const [loadingScores, setLoadingScores] = useState(true)
+  const [saving, setSaving] = useState(false)
   const startTimeRef = useRef(null)
   const { reportSuccess, reportFailure } = useServerStatus()
 
-  async function refreshScores() {
-    try {
-      setScores(await fetchScores('stroop'))
-      reportSuccess()
-    } catch (error) {
-      reportFailure(error)
-    }
-  }
-
   useEffect(() => {
-    refreshScores()
-  }, [])
+    let cancelled = false
+
+    async function loadScores() {
+      setLoadingScores(true)
+      try {
+        const next = await fetchScores('stroop')
+        if (!cancelled) {
+          setScores(next)
+          reportSuccess()
+        }
+      } catch (error) {
+        if (!cancelled) reportFailure(error)
+      } finally {
+        if (!cancelled) setLoadingScores(false)
+      }
+    }
+
+    loadScores()
+    return () => {
+      cancelled = true
+    }
+  }, [historyKey, reportFailure, reportSuccess])
 
   function startTrial() {
+    if (saving) return
     setLastResult(null)
     setTrial(pickTrial())
     setStatus('playing')
@@ -47,20 +61,23 @@ export default function StroopGame({ onScoresChanged }) {
   }
 
   async function chooseColor(inkName) {
-    if (status !== 'playing' || !trial) return
+    if (status !== 'playing' || !trial || saving) return
 
     const ms = Math.round(performance.now() - startTimeRef.current)
     const correct = inkName === trial.ink
     setLastResult({ ms, correct })
     setStatus('result')
+    setSaving(true)
 
     try {
-      await saveScore({ ms, game: 'stroop', correct })
+      const saved = await saveScore({ ms, game: 'stroop', correct })
+      setScores((prev) => [saved, ...prev].slice(0, 10))
       reportSuccess()
-      await refreshScores()
-      onScoresChanged?.()
+      onScoreSaved?.(saved)
     } catch (error) {
       reportFailure(error)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -81,7 +98,12 @@ export default function StroopGame({ onScoresChanged }) {
       <p className="stroop__hint">Pick the ink colour, not the word.</p>
 
       {status === 'idle' && (
-        <button type="button" className="stroop__start" onClick={startTrial}>
+        <button
+          type="button"
+          className="stroop__start"
+          onClick={startTrial}
+          disabled={saving}
+        >
           Start
         </button>
       )}
@@ -103,6 +125,7 @@ export default function StroopGame({ onScoresChanged }) {
                 className="stroop__choice"
                 style={{ background: color.value }}
                 onClick={() => chooseColor(color.name)}
+                disabled={saving}
               >
                 {color.name}
               </button>
@@ -115,29 +138,39 @@ export default function StroopGame({ onScoresChanged }) {
         <>
           <p>
             {lastResult.correct ? 'Correct' : 'Wrong'} — {lastResult.ms} ms
+            {saving ? ' — Saving…' : ''}
           </p>
-          <button type="button" className="stroop__start" onClick={startTrial}>
+          <button
+            type="button"
+            className="stroop__start"
+            onClick={startTrial}
+            disabled={saving}
+          >
             Next
           </button>
         </>
       )}
 
-      {attempts > 0 && (
-        <>
-          <p>
-            Accuracy: {accuracy}% | Average: {averageMs} ms | Attempts:{' '}
-            {attempts}
-          </p>
-          <p aria-label="Saved Stroop scores">
-            Past:{' '}
-            {scores
-              .map(
-                (score) =>
-                  `${score.ms} ms (${score.correct ? 'ok' : 'miss'})`,
-              )
-              .join(', ')}
-          </p>
-        </>
+      {loadingScores ? (
+        <p className="loading-note">Loading scores…</p>
+      ) : (
+        attempts > 0 && (
+          <>
+            <p>
+              Accuracy: {accuracy}% | Average: {averageMs} ms | Attempts:{' '}
+              {attempts}
+            </p>
+            <p aria-label="Saved Stroop scores">
+              Past:{' '}
+              {scores
+                .map(
+                  (score) =>
+                    `${score.ms} ms (${score.correct ? 'ok' : 'miss'})`,
+                )
+                .join(', ')}
+            </p>
+          </>
+        )
       )}
     </div>
   )
