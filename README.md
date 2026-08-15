@@ -1,13 +1,15 @@
 # Reaction & Stroop Lab
 
-A small web app for measuring reaction time and trying a Stroop colour test. Scores are saved on a FastAPI backend with SQLite, and the UI shows stats plus a progress chart over time.
+A small practice lab for reaction time and Stroop colour interference. Play a round, save the result, then look at progress over real calendar time and how your sittings cluster together.
+
+![Reaction & Stroop Lab](docs/screenshot.png)
 
 ## Tech stack
 
-- **Frontend:** React + Vite
+- **Frontend:** React + Vite, Recharts
 - **Backend:** FastAPI + Uvicorn
 - **Database:** SQLite (`backend/scores.db`)
-- **Charts:** Recharts
+- **ML:** scikit-learn (`StandardScaler` + `KMeans`)
 - **Tests:** pytest
 
 ## Features
@@ -15,9 +17,17 @@ A small web app for measuring reaction time and trying a Stroop colour test. Sco
 - Reaction game: wait for green, click as fast as you can
 - Stroop test: pick the ink colour, not the word
 - Scores stored with a timestamp and game label (`reaction` / `stroop`)
-- `GET /stats` for best time, average time, and attempts per game
-- Progress line chart with one line per game
-- Clear “couldn't reach the server” message if the backend is down
+- Progress chart plotted against real timestamps (not attempt number)
+- Stats: best, average, and attempt count per game
+- Session grouping: idle gap over 30 minutes starts a new sitting
+- Session insights: k-means clusters with readable labels
+- Reset button calls `DELETE /scores` and clears **both** games on the server (sessions and insights span both games, so a screen-only clear would leave stale data)
+- Offline banner when the API is unreachable
+- Sample multi-session data via `npm run seed`
+
+## What the ML found
+
+On the seeded sample data, StandardScaler + k-means usually finds a large **“fast but inconsistent”** cluster (quick averages with high spread), a smaller **“slower and uneven”** group, and occasionally a **“slow but steady”** sitting with fewer attempts and tighter consistency.
 
 ## How to run
 
@@ -50,6 +60,14 @@ npm run dev
 
 App: http://localhost:5173/
 
+### 4. Optional: seed sample session data
+
+```bash
+npm run seed
+```
+
+This resets the database and inserts ~300 scores across ~10 sittings so session clustering has enough data to show groups.
+
 ## Tests
 
 ```bash
@@ -65,4 +83,6 @@ cd backend
 | POST | `/scores` | Save a score |
 | GET | `/scores` | List recent scores (`?game=reaction\|stroop`) |
 | GET | `/stats` | Best / average / attempts per game |
-| DELETE | `/scores` | Clear all scores |
+| GET | `/sessions` | Group scores into sessions and summarize each |
+| GET | `/insights` | K-means clusters of sessions with readable labels |
+| DELETE | `/scores` | Clear all scores (both games) |
