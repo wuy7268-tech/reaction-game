@@ -25,8 +25,11 @@ const EMPTY_STATS = [
 function scoreTimestamp(score) {
   const raw = score.created_at
   if (!raw) return score.id
+  // SQLite datetime('now') is UTC with no zone, e.g. "2026-08-15 14:05:00".
+  // Date.parse() treats that as local unless we mark it UTC.
   const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T')
-  const ms = Date.parse(normalized)
+  const hasZone = /[zZ]|[+-]\d{2}:?\d{2}$/.test(normalized)
+  const ms = Date.parse(hasZone ? normalized : `${normalized}Z`)
   return Number.isNaN(ms) ? score.id : ms
 }
 

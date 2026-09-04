@@ -86,6 +86,30 @@ def test_insights_endpoint_clusters_sessions(tmp_path, monkeypatch):
     assert all("label" in session and "cluster_id" in session for session in body["sessions"])
 
 
+def test_insights_endpoint_with_one_session(tmp_path, monkeypatch):
+    monkeypatch.setattr(main, "DB_PATH", tmp_path / "test_scores.db")
+    main.init_db()
+
+    with main.get_db() as conn:
+        _insert_score(
+            conn,
+            ms=400,
+            game="reaction",
+            created_at="2026-08-01 10:00:00",
+        )
+
+    with TestClient(main.app) as client:
+        response = client.get("/insights")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["n_clusters"] == 0
+    assert body["groups"] == []
+    assert len(body["sessions"]) == 1
+    assert body["sessions"][0]["cluster_id"] == 0
+    assert body["sessions"][0]["label"] == "needs more sittings"
+
+
 def test_label_fast_but_inconsistent():
     centroid = {
         "average_ms": 200,

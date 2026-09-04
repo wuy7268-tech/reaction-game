@@ -96,11 +96,22 @@ def cluster_sessions(
     matrix = np.array([_fill_features(session) for session in sessions], dtype=float)
     k = _choose_k(len(sessions), n_clusters)
     if k == 0:
+        # Not enough sittings to cluster. Still attach required label fields so
+        # the /insights response validates (otherwise FastAPI returns 500 and
+        # the browser can surface it as "couldn't reach the server").
         return {
             "n_clusters": 0,
             "features_used": list(FEATURE_KEYS),
+            "scaled": True,
             "groups": [],
-            "sessions": sessions,
+            "sessions": [
+                {
+                    **session,
+                    "cluster_id": 0,
+                    "label": "needs more sittings",
+                }
+                for session in sessions
+            ],
         }
 
     scaler = StandardScaler()
