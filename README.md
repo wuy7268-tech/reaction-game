@@ -4,6 +4,23 @@ A small practice lab for reaction time and Stroop colour interference. Play a ro
 
 ![Reaction & Stroop Lab](docs/screenshot.png)
 
+## Screenshots
+
+### Reaction Game
+The reaction game measures response time while tracking previous attempts, best time, and average performance.
+
+![Reaction Game](screenshots/reaction-game.png)
+
+### Stroop Test
+The Stroop test challenges users to identify the ink color rather than the displayed word while tracking both response time and accuracy.
+
+![Stroop Test](screenshots/stroop-test.png)
+
+### Progress Tracking
+Reaction and Stroop results are stored and visualized over time, allowing users to compare performance across attempts.
+
+![Progress Tracking](screenshots/progress.png)
+
 ## Tech stack
 
 - **Frontend:** React + Vite, Recharts
